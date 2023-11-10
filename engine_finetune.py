@@ -158,12 +158,15 @@ def evaluate(data_loader, model, device, task, epoch, mode, num_class):
         images = batch[0]
         target = batch[-1]
         images = images.to(device, non_blocking=True)
+        
+        target=target[:,0].long()
         target = target.to(device, non_blocking=True)
         true_label=F.one_hot(target.to(torch.int64), num_classes=num_class)
 
         # compute output
         with torch.cuda.amp.autocast():
             output = model(images)
+            output=output[:,0,:]
             loss = criterion(output, target)
             prediction_softmax = nn.Softmax(dim=1)(output)
             _,prediction_decode = torch.max(prediction_softmax, 1)

@@ -49,7 +49,7 @@ def get_args_parser():
     parser.add_argument('--model_path', default='./finetune_rop/checkpoint-best.pth',type=str,
                         help='finetune from checkpoint')
     parser.add_argument('--global_pool', action='store_true')
-    parser.set_defaults(global_pool=True)
+    parser.set_defaults(global_pool=False)
     parser.add_argument('--cls_token', action='store_false', dest='global_pool',
                         help='Use class token instead of global pool for classification')
     parser.add_argument('--batch_size', default=16, type=int,
@@ -114,21 +114,23 @@ def main(args):
     # Assuming data_dict is already loaded from 'annotations.json'
     for x, labels, image_names in data_loader_test:
         x = x.cuda()
-        outputs, embedding = model.get_embedding(x)
-        pred_patches=model.head(embedding)
-        pred_patches=torch.softmax(pred_patches,dim=-1).detach().cpu()
-        pred_patches=pred_patches[:,:,1]
-        bc,num_p=pred_patches.shape
-        pred_patches=pred_patches.reshape(bc,14,14).numpy()
-
-        for emb, label, image_name in zip(pred_patches, labels,  image_names):
+        outputs=model(x)
+        outputs=torch.softmax(outputs,dim=-1).detach().cpu()
+        embedding=outputs[:,1:,1]
+        bc,num_p=embedding.shape
+        embedding=embedding.reshape(bc,14,14)
+        preds=torch.argmax(outputs[:,0,:])
+        print(embedding.shape)
+        print(preds)
+        for emb, label, image_name in zip(embedding, labels,  image_names):
             save_path = os.path.join(save_embedding_dir, image_name[:-3] + '.pth')
             # Store the embedding
             visual_heatmap(
                 image_path=data_dict[image_name]['image_path'],
-                attention_heatmap=emb,
+                attention_heatmap=emb.numpy(),
                 save_path=os.path.join(args.save_dir,image_name)
             )
+        print(preds)
 
     # Save the updated data dictionary
     # with open(os.path.join(args.data_path, 'annotations.json'), 'w') as f:
