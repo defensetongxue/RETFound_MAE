@@ -8951,3 +8951,5 @@ world_size=1)
 The set_window_title function was deprecated in Matplotlib 3.4 and will be removed two minor releases later. Use manager.set_window_title or GUI-specific methods instead.
   fig.canvas.set_window_title(title)
 [08:09:58.152267] Training time 1:15:32
+
+global_pool [16:14:36.846779] Sklearn Metrics - Acc: 0.9057 AUC-roc: 0.9570 AUC-pr: 0.9299 F1-score: 0.7113 MCC: 0.6810

@@ -40,33 +40,13 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
         
         if self.global_pool:
             x = self.fc_norm(x)
-            x[:,0,] = x[:, 1:, :].mean(dim=1)  # global pool without cls token
+            # x[:,0,] = x[:, 1:, :].mean(dim=1)  # global pool without cls token
+            max_patch_idx=x[:,1:,1].argmax(dim=1)
+            x[:, 0, :] = x[torch.arange(x.shape[0]), 1 + max_patch_idx]
         else:
             x = self.norm(x)
         return x
         
-    def get_embedding(self, x):
-        B = x.shape[0]
-        x = self.patch_embed(x)
-
-        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
-        x = torch.cat((cls_tokens, x), dim=1)
-        x = x + self.pos_embed
-        x = self.pos_drop(x)
-
-        for blk in self.blocks:
-            x = blk(x)
-
-        if self.global_pool:
-            x = self.fc_norm(x)
-            embedding=x[:, 1:, :]
-            outcome = embedding.mean(dim=1)  # global pool without cls token
-        else:
-            x = self.norm(x)
-            embedding=x[:, 1:,: ]
-            outcome = x[:, 0]
-        outcome=self.head(outcome)
-        return outcome,embedding
 
     def _get_attention_map(self, img_tensor):
         """
@@ -115,6 +95,7 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
             attn_heatmap = torch.nn.functional.interpolate(
                 attn_heatmap.unsqueeze(1), size=(H, W), mode='nearest')
         return attn_heatmap.squeeze(1)  # Removing the single-channel dimension
+    
 def visual_heatmap(image_path, attention_heatmap, save_path):
     """
     Visualizes the heatmap and overlays it on the original image using only PIL.
