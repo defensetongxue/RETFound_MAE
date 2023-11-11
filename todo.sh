@@ -9,4 +9,4 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=48798 main_f
     --data_path ../autodl-tmp/dataset_ROP \
     --task ./finetune_rop/ \
     --finetune ./RETFound_cfp_weights.pth \
-    --r 2 
+    --r 150

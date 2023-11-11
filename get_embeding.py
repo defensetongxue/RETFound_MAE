@@ -119,9 +119,16 @@ def main(args):
         embedding=outputs[:,1:,1]
         bc,num_p=embedding.shape
         embedding=embedding.reshape(bc,14,14)
-        preds=torch.argmax(outputs[:,0,:])
-        print(embedding.shape)
-        print(preds)
+        _, preds=outputs[:,0,:].max(dim=-1)
+        _ ,max_probs= outputs[:, 1:, :].max(dim=-1)  # Shape: [batch_size, num_patches
+        # Step 2: Find the patch with the maximum probability for each item in the batch
+        preds_map,_ = max_probs.max(dim=-1)  # Shape: [batch_size]
+
+        # print(preds_map.shape)
+        # print(preds.shape)
+        for i,j,image_name in zip(preds,preds_map,image_names):
+            if i != j:
+                print(image_name)
         for emb, label, image_name in zip(embedding, labels,  image_names):
             save_path = os.path.join(save_embedding_dir, image_name[:-3] + '.pth')
             # Store the embedding
@@ -130,7 +137,7 @@ def main(args):
                 attention_heatmap=emb.numpy(),
                 save_path=os.path.join(args.save_dir,image_name)
             )
-        print(preds)
+        print(preds_map)
 
     # Save the updated data dictionary
     # with open(os.path.join(args.data_path, 'annotations.json'), 'w') as f:
